@@ -1,0 +1,584 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <title>Pregnancy Scan (For Fun)</title>
+  <style>
+    :root{
+      --pink:#ff4fa3;
+      --blue:#33c8ff;
+
+      --card:rgba(255,255,255,.78);
+      --card2:rgba(255,255,255,.92);
+      --text:rgba(20,16,28,.92);
+      --muted:rgba(20,16,28,.62);
+      --shadow: 0 18px 50px rgba(20,16,28,.12);
+      --radius: 26px;
+      --safeB: env(safe-area-inset-bottom, 0px);
+      --safeT: env(safe-area-inset-top, 0px);
+    }
+
+    *{ box-sizing:border-box; -webkit-tap-highlight-color: transparent; }
+    html,body{ height:100%; }
+    body{
+      margin:0;
+      font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, "Apple Color Emoji","Segoe UI Emoji";
+      color:var(--text);
+      background:
+        radial-gradient(900px 700px at 18% 10%, rgba(255,79,163,.28), transparent 55%),
+        radial-gradient(900px 700px at 82% 20%, rgba(51,200,255,.26), transparent 55%),
+        radial-gradient(900px 700px at 50% 95%, rgba(255,138,199,.18), transparent 60%),
+        linear-gradient(180deg, #ffffff, #fff6fb 40%, #f4fbff);
+      overflow:hidden;
+    }
+
+    .app{ position:relative; height:100%; width:100%; }
+
+    .screen{
+      position:absolute;
+      inset:0;
+      display:flex;
+      flex-direction:column;
+      padding: calc(18px + var(--safeT)) 18px calc(18px + var(--safeB)) 18px;
+      gap:14px;
+      opacity:0;
+      transform: translateY(12px);
+      pointer-events:none;
+      transition: opacity .35s ease, transform .35s ease;
+
+      overflow-y:auto;
+      -webkit-overflow-scrolling: touch;
+      overscroll-behavior: contain;
+    }
+    .screen.active{
+      opacity:1;
+      transform: translateY(0);
+      pointer-events:auto;
+    }
+
+    .topGlow{
+      position:absolute;
+      inset:-70px -70px auto -70px;
+      height:240px;
+      background: radial-gradient(closest-side at 50% 40%, rgba(255,79,163,.22), rgba(51,200,255,.18), transparent 70%);
+      filter: blur(6px);
+      pointer-events:none;
+    }
+
+    .title{
+      margin:0;
+      text-align:center;
+      letter-spacing:-0.02em;
+      font-weight:900;
+      font-size: clamp(26px, 7.4vw, 36px);
+      line-height:1.08;
+      text-shadow: 0 10px 26px rgba(255,79,163,.18);
+    }
+
+    .subtitle{
+      margin:0;
+      text-align:center;
+      color:var(--muted);
+      font-size:14px;
+      line-height:1.35;
+    }
+
+    .center{
+      flex:1;
+      min-height: 0;
+      display:flex;
+      align-items:center;
+      justify-content:center;
+    }
+
+    .card{
+      width:min(420px, 100%);
+      background: linear-gradient(180deg, var(--card2), var(--card));
+      border:1px solid rgba(255,79,163,.18);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      padding: 18px;
+      backdrop-filter: blur(10px);
+      display:flex;
+      align-items:center;
+      justify-content:center;
+    }
+
+    .heroImgWrap{ width:100%; display:flex; align-items:center; justify-content:center; }
+    .heroImg{
+      width: min(260px, 70vw);
+      height: auto;
+      display:block;
+      filter: drop-shadow(0 18px 30px rgba(255,79,163,.18));
+      user-select:none;
+      -webkit-user-drag:none;
+    }
+
+    .bottom{
+      margin-top:auto;
+      display:flex;
+      flex-direction:column;
+      gap:10px;
+      padding-bottom: calc(2px + var(--safeB));
+    }
+
+    .btn{
+      appearance:none;
+      border:none;
+      width:100%;
+      border-radius: 999px;
+      padding: 16px 18px;
+      font-weight:900;
+      letter-spacing:.01em;
+      color:white;
+      font-size:16px;
+      box-shadow: 0 18px 46px rgba(255,79,163,.18);
+      background: linear-gradient(90deg, var(--pink), var(--blue));
+      position:relative;
+      overflow:hidden;
+      cursor:pointer;
+      transform: translateZ(0);
+    }
+    .btn::after{
+      content:"";
+      position:absolute;
+      inset:-40% -20%;
+      background: radial-gradient(circle at 20% 30%, rgba(255,255,255,.65), transparent 40%),
+                  radial-gradient(circle at 80% 60%, rgba(255,255,255,.45), transparent 45%);
+      opacity:.65;
+      transform: translateX(-15%);
+      transition: transform .45s ease, opacity .45s ease;
+      pointer-events:none;
+    }
+    .btn:active{ transform: scale(.985); }
+    .btn:hover::after{ transform: translateX(10%); opacity:.85; }
+
+    .hint{
+      text-align:center;
+      color: rgba(20,16,28,.55);
+      font-size:12px;
+      line-height:1.25;
+      margin:0;
+    }
+
+    /* ===== Screen 2 ===== */
+    .testWrap{
+      display:flex;
+      flex-direction:column;
+      align-items:center;
+      gap: 12px;
+    }
+
+    .photoTest{
+      width: min(380px, 94vw);
+      border-radius: 22px;
+      overflow:hidden;
+      position:relative;
+      box-shadow: 0 22px 56px rgba(20,16,28,.14);
+      border: 1px solid rgba(20,16,28,.07);
+      background: rgba(255,255,255,.65);
+    }
+
+    .photoTest img{
+      width:100%;
+      height:auto;
+      display:block;
+      user-select:none;
+      -webkit-user-drag:none;
+    }
+
+    .shine{
+      position:absolute;
+      inset:-25%;
+      background: linear-gradient(120deg, transparent 35%, rgba(255,255,255,.85) 50%, transparent 65%);
+      transform: translateX(-120%);
+      opacity:0;
+      pointer-events:none;
+      z-index:2;
+    }
+    .scanning .shine{
+      opacity:.95;
+      animation: sweep 1.1s linear infinite;
+    }
+    @keyframes sweep{
+      0%{ transform: translateX(-120%); }
+      100%{ transform: translateX(120%); }
+    }
+
+    .qOverlay{
+      position:absolute;
+      left: 51.2%;
+      top: 54.2%;
+      width: 34%;
+      height: 26%;
+      transform: translate(-50%, -50%);
+      border-radius: 14px;
+      display:grid;
+      place-items:center;
+      z-index:3;
+      pointer-events:none;
+    }
+
+    .qOverlay::before{
+      content:"";
+      position:absolute;
+      inset:-10px;
+      background: #ffffff;
+      border: 1px solid rgba(20,16,28,.12);
+      border-radius: 16px;
+      box-shadow: 0 14px 30px rgba(20,16,28,.12);
+    }
+
+    .qOverlay span{
+      position:relative;
+      font-weight: 1000;
+      font-size: clamp(18px, 5vw, 28px);
+      color: rgba(20,16,28,.70);
+      text-shadow: 0 10px 18px rgba(0,0,0,.10);
+    }
+
+    .positive .qOverlay{
+      opacity:0;
+      transform: translate(-50%, -50%) scale(.96);
+      transition: opacity .35s ease, transform .35s ease;
+    }
+    .qOverlay{
+      opacity:1;
+      transition: opacity .35s ease, transform .35s ease;
+    }
+
+    .status{
+      width:min(360px, 92vw);
+      padding: 10px 12px;
+      border-radius: 18px;
+      background: rgba(255,255,255,.75);
+      border: 1px solid rgba(20,16,28,.08);
+      box-shadow: 0 12px 30px rgba(20,16,28,.10);
+      backdrop-filter: blur(10px);
+      color: rgba(20,16,28,.82);
+      font-weight: 800;
+      letter-spacing:.01em;
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      gap:10px;
+      min-height: 52px;
+      text-align:center;
+    }
+
+    .pill{
+      display:inline-flex;
+      align-items:center;
+      gap:8px;
+      padding: 10px 12px;
+      border-radius:999px;
+      background: rgba(255,255,255,.80);
+      border: 1px solid rgba(20,16,28,.08);
+      color: rgba(20,16,28,.86);
+      font-size: 13px;
+      font-weight: 900;
+      flex-wrap: wrap;
+      justify-content:center;
+    }
+
+    .dot{
+      width:9px; height:9px;
+      border-radius:999px;
+      background: linear-gradient(180deg, var(--pink), var(--blue));
+      box-shadow: 0 0 0 3px rgba(255,255,255,.75);
+      flex: 0 0 auto;
+    }
+
+    /* Result block */
+    .resultBlock{
+      display:none;
+      width:min(360px, 92vw);
+      border-radius: 18px;
+      background: rgba(255,255,255,.78);
+      border: 1px solid rgba(20,16,28,.08);
+      box-shadow: 0 12px 30px rgba(20,16,28,.10);
+      padding: 12px 14px;
+      text-align:left;
+      font-weight: 900;
+      color: rgba(20,16,28,.86);
+    }
+    .resultBlock.show{ display:block; }
+    .resultRow{
+      display:flex;
+      justify-content:space-between;
+      gap:12px;
+      padding: 6px 2px;
+      border-bottom: 1px solid rgba(20,16,28,.06);
+    }
+    .resultRow:last-child{ border-bottom:none; }
+    .label{ color: rgba(20,16,28,.55); font-weight: 800; }
+    .value{ font-weight: 950; }
+    .positiveTxt{
+      background: linear-gradient(90deg, rgba(255,79,163,.22), rgba(51,200,255,.18));
+      border: 1px solid rgba(20,16,28,.06);
+      padding: 4px 10px;
+      border-radius: 999px;
+      display:inline-flex;
+      align-items:center;
+      gap:8px;
+    }
+    .miniDot{
+      width:8px; height:8px; border-radius:999px;
+      background: linear-gradient(180deg, var(--pink), var(--blue));
+    }
+
+    /* Finger button: hold-to-scan */
+    .fingerBtn{
+      appearance:none;
+      border:none;
+      width: 86px;
+      height: 86px;
+      border-radius: 26px;
+      margin: 0 auto;
+      background: linear-gradient(180deg, rgba(255,255,255,.86), rgba(255,255,255,.62));
+      border: 1px solid rgba(20,16,28,.08);
+      box-shadow: 0 18px 46px rgba(20,16,28,.14);
+      display:grid;
+      place-items:center;
+      cursor:pointer;
+      position:relative;
+      overflow:hidden;
+      transform: translateZ(0);
+      touch-action: none;
+    }
+    .fingerBtn::before{
+      content:"";
+      position:absolute;
+      inset:-40%;
+      background: radial-gradient(circle at 30% 30%, rgba(255,79,163,.28), transparent 45%),
+                  radial-gradient(circle at 70% 70%, rgba(51,200,255,.24), transparent 45%);
+      filter: blur(4px);
+      opacity:.9;
+      pointer-events:none;
+    }
+    .fingerBtn:active{ transform: scale(.98); }
+    .fingerBtn[disabled]{ opacity:.55; cursor:not-allowed; }
+
+    .fingerBtn.holding{
+      box-shadow: 0 18px 46px rgba(20,16,28,.14), 0 0 0 6px rgba(51,200,255,.18);
+    }
+
+    .fingerIcon{
+      width:44px;
+      height:44px;
+      position:relative;
+      z-index:1;
+      opacity:.95;
+      filter: drop-shadow(0 10px 18px rgba(20,16,28,.14));
+    }
+
+    /* Extra safety for small height screens */
+    @media (max-height: 640px){
+      .screen{ gap:10px; padding: calc(14px + var(--safeT)) 14px calc(14px + var(--safeB)) 14px; }
+      .photoTest{ width: min(360px, 92vw); }
+      .fingerBtn{ width: 78px; height: 78px; border-radius: 24px; }
+      .fingerIcon{ width: 40px; height: 40px; }
+    }
+
+    @media (max-width: 360px){
+      .qOverlay{ left: 51.8%; top: 54.8%; width: 38%; height: 28%; }
+      .qOverlay::before{ inset:-12px; }
+      .qOverlay span{ font-size: clamp(16px, 5vw, 26px); }
+    }
+  </style>
+</head>
+<body>
+  <div class="app">
+    <div class="topGlow"></div>
+
+    <!-- Screen 1 -->
+    <section class="screen active" id="screen1" aria-hidden="false">
+      <div style="height:10px"></div>
+      <h1 class="title">Do you want to know if you are pregnant?</h1>
+
+      <div class="center">
+        <div class="card" role="note" aria-label="Image">
+          <div class="heroImgWrap">
+            <img
+              class="heroImg"
+              src="https://i.postimg.cc/NFcnGCxR/6ebd1cb851f1dbacc1e8fb3b961355dd-removebg-preview.png"
+              alt="Illustration"
+              loading="eager"
+              referrerpolicy="no-referrer"
+            />
+          </div>
+        </div>
+      </div>
+
+      <div class="bottom">
+        <button class="btn" id="nextBtn" type="button">Next</button>
+      </div>
+    </section>
+
+    <!-- Screen 2 -->
+    <section class="screen" id="screen2" aria-hidden="true">
+      <h2 class="title" style="font-size: clamp(22px, 6.6vw, 28px);">Perform a scan</h2>
+      <p class="subtitle">Press & hold the fingerprint sensor to scan.</p>
+
+      <div class="center">
+        <div class="testWrap">
+          <div class="photoTest" id="pregTest" aria-label="Pregnancy test">
+            <div class="shine"></div>
+            <img
+              src="https://i.pinimg.com/736x/ec/f7/15/ecf715ce30fd7befd4807f4124bc18e1.jpg"
+              alt="Pregnancy test"
+              loading="eager"
+              referrerpolicy="no-referrer"
+            />
+            <div class="qOverlay" aria-hidden="true"><span>?</span></div>
+          </div>
+
+          <div class="status" aria-live="polite">
+            <span class="pill"><span class="dot"></span><span id="statusText">Hold to scan</span></span>
+          </div>
+
+          <!-- Final result -->
+          <div class="resultBlock" id="resultBlock" aria-live="polite">
+            <div class="resultRow">
+              <div class="label">Result</div>
+              <div class="value">
+                <span class="positiveTxt"><span class="miniDot"></span>Positive</span>
+              </div>
+            </div>
+            <div class="resultRow">
+              <div class="label">Gender</div>
+              <div class="value" id="genderValue">Boy</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="bottom">
+        <button class="fingerBtn" id="fingerBtn" type="button" aria-label="Fingerprint button">
+          <svg class="fingerIcon" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+            <path d="M12 3.2c-3.9 0-7 3.1-7 7 0 1.2.3 2.3.8 3.3" stroke="rgba(20,16,28,.86)" stroke-width="1.6" stroke-linecap="round"/>
+            <path d="M9.1 20.3c2.5 1 5.4.2 7-2.2 1.3-1.9 1.3-4.5 1.3-6.2 0-2.9-2.4-5.2-5.4-5.2-2.7 0-5 1.9-5.3 4.6" stroke="rgba(20,16,28,.82)" stroke-width="1.6" stroke-linecap="round"/>
+            <path d="M9 11.4c0 1.7.2 4.3-1.5 6.6" stroke="rgba(20,16,28,.82)" stroke-width="1.6" stroke-linecap="round"/>
+            <path d="M12.1 8.9c-1.5 0-2.7 1.2-2.7 2.7 0 1.6.1 3.4-.8 5.1" stroke="rgba(20,16,28,.76)" stroke-width="1.6" stroke-linecap="round"/>
+            <path d="M12.1 11.1c0 2.9.2 5.2-1.4 7.1" stroke="rgba(20,16,28,.76)" stroke-width="1.6" stroke-linecap="round"/>
+            <path d="M14.8 12.1c0 2.2-.1 4.1-1.2 6" stroke="rgba(20,16,28,.70)" stroke-width="1.6" stroke-linecap="round"/>
+          </svg>
+        </button>
+        <p class="hint">Hold your finger on the button until it reaches 100%</p>
+      </div>
+    </section>
+  </div>
+
+  <script>
+    const screen1 = document.getElementById('screen1');
+    const screen2 = document.getElementById('screen2');
+    const nextBtn = document.getElementById('nextBtn');
+
+    const fingerBtn = document.getElementById('fingerBtn');
+    const pregTest = document.getElementById('pregTest');
+    const statusText = document.getElementById('statusText');
+
+    const resultBlock = document.getElementById('resultBlock');
+    const genderValue = document.getElementById('genderValue');
+
+    let scanning = false;
+    let progress = 0;
+    let timer = null;
+    let holding = false;
+
+    function goToScreen2(){
+      screen1.classList.remove('active');
+      screen1.setAttribute('aria-hidden', 'true');
+      screen2.classList.add('active');
+      screen2.setAttribute('aria-hidden', 'false');
+      screen2.scrollTop = 0;
+      resetScan();
+    }
+
+    function resetScan(){
+      holding = false;
+      scanning = false;
+      progress = 0;
+      clearInterval(timer);
+      timer = null;
+
+      pregTest.classList.remove('scanning', 'positive');
+      statusText.textContent = 'Hold to scan';
+      fingerBtn.disabled = false;
+      fingerBtn.classList.remove('holding');
+
+      resultBlock.classList.remove('show');
+    }
+
+    function finishScan(){
+      scanning = false;
+      holding = false;
+      clearInterval(timer);
+      timer = null;
+
+      pregTest.classList.remove('scanning');
+      pregTest.classList.add('positive');
+
+      const gender = Math.random() < 0.5 ? 'Boy' : 'Girl';
+      genderValue.textContent = gender;
+
+      statusText.textContent = 'Scan complete';
+      resultBlock.classList.add('show');
+
+      fingerBtn.disabled = true;      // finished once
+      fingerBtn.classList.remove('holding');
+    }
+
+    function startHold(){
+      if (pregTest.classList.contains('positive')) return;
+
+      holding = true;
+      fingerBtn.classList.add('holding');
+
+      pregTest.classList.add('scanning');
+      statusText.textContent = `Scanning… ${progress}%`;
+
+      if (!timer) {
+        scanning = true;
+        timer = setInterval(() => {
+          if (!holding) return;
+
+          const bump = Math.floor(Math.random() * 4) + 2; // 2..5
+          progress = Math.min(100, progress + bump);
+          statusText.textContent = `Scanning… ${progress}%`;
+
+          if (progress >= 100) finishScan();
+        }, 140);
+      }
+    }
+
+    function endHold(){
+      if (!holding) return;
+      holding = false;
+
+      if (!pregTest.classList.contains('positive')) {
+        fingerBtn.classList.remove('holding');
+        pregTest.classList.remove('scanning');
+
+        scanning = false;
+        clearInterval(timer);
+        timer = null;
+
+        statusText.textContent = `Paused… ${progress}% (hold to continue)`;
+      }
+    }
+
+    fingerBtn.addEventListener('pointerdown', (e) => {
+      e.preventDefault();
+      fingerBtn.setPointerCapture?.(e.pointerId);
+      startHold();
+    });
+    fingerBtn.addEventListener('pointerup', endHold);
+    fingerBtn.addEventListener('pointercancel', endHold);
+    fingerBtn.addEventListener('pointerleave', endHold);
+
+    nextBtn.addEventListener('click', goToScreen2);
+  </script>
+</body>
+</html>
